@@ -1,16 +1,12 @@
 //jshint esversion:6
-
 const path = require('path');
-
 const expressEdge = require('express-edge');
-
 const express = require('express');
-
 const mongoose = require('mongoose');
-
 const bodyParser = require('body-parser');
-
 const app = new express();
+
+const Post = require('./database/models/Post');
 
 mongoose.connect('mongodb://localhost:27017/simple-blog', { useNewUrlParser: true })
     .then(() => 'You are now connected to Mongo!')
@@ -27,28 +23,40 @@ app.use(bodyParser.urlencoded({
 }));
 
 app.get('/posts/new', (req, res) => {
-    res.render('create')
+    res.render('create');
 });
 
 app.post('/posts/store', (req, res) => {
     console.log(req.body)
-    res.redirect('/')
+    Post.create(req.body, (error, post) => {
+        res.redirect('/');
+    });
 });
 
-app.get('/', (req, res) => {
-    res.render('index');
+app.get('/', async (req, res) => {
+    const posts = await Post.find({})
+    res.render('index', {
+        posts
+    });
 });
 
-app.get('/about.html', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'pages/about.html'));
+app.get('/about', (req, res) => {
+    res.render('about');
 });
 
-app.get('/contact.html', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'pages/contact.html'));
+app.get('/contact', (req, res) => {
+    res.render('contact');
 });
 
-app.get('/post.html', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'pages/post.html'));
+app.get('/post', (req, res) => {
+    res.render('post');
+});
+
+app.get('/post/:id', async (req, res) => {
+    const post = await Post.findById(req.params.id)
+    res.render('post', {
+        post
+    })
 });
 
 app.listen(4000, () => {
